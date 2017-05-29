@@ -52,15 +52,16 @@ I then explored different color spaces and different `skimage.hog()` parameters 
 
 Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
-
 ![alt text][image3]
 ![alt text][image4]
 
 Here are color historgrams
+
 ![alt text][image5]
 ![alt text][image6]
 
 Here are color spatial features
+
 ![alt text][image7]
 ![alt text][image8]
 
