@@ -12,14 +12,20 @@ The goals / steps of this project are the following:
 Link to my [project code](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/wip/Vehicle_Detection.ipynb)
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
+[image1]: ./output_images/example_cars.png
+[image2]: ./output_images/example_non_cars.png
+[image3]: ./output_images/hog_car.png
+[image4]: ./output_images/hog_non_car.png
+[image5]: ./output_images/color_hist_car.png
+[image6]: ./output_images/color_hist_non_car.png
+[image7]: ./output_images/color_spatial_car.png
+[image8]: ./output_images/color_spatial_non_car.png
+[image9]: ./output_images/search_windows.png
+[image10]: ./output_images/find_cars_raw.png
+[image11]: ./output_images/heatmap_frames.png
+[image12]: ./output_images/heatmap_avg.png
+[video1]: ./output_images.mp4
+
 
 ## Rubric Points
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/513/view) individually and describe how I addressed each point in my implementation.  
@@ -40,13 +46,24 @@ The code for this step is contained in the first code cell of the IPython notebo
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
 ![alt text][image1]
+![alt text][image2]
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
 Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
+![alt text][image3]
+![alt text][image4]
 
-![alt text][image2]
+Here are color historgrams
+
+![alt text][image5]
+![alt text][image6]
+
+Here are color spatial features
+
+![alt text][image7]
+![alt text][image8]
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
@@ -62,13 +79,13 @@ I trained a linear SVM using...
 
 I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
 
-![alt text][image3]
+![alt text][image9]
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
-![alt text][image4]
+![alt text][image10]
 ---
 
 ### Video Implementation
@@ -85,15 +102,10 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ### Here are six frames and their corresponding heatmaps:
 
-![alt text][image5]
+![alt text][image11]
 
 ### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
-
+![alt text][image12]
 
 ---
 
