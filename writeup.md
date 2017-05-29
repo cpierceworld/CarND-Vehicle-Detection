@@ -9,7 +9,7 @@ The goals / steps of this project are the following:
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
 * Estimate a bounding box for vehicles detected.
 
-Link to my [project code](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/wip/Vehicle_Detection.ipynb)
+Link to my [project code](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/master/Vehicle_Detection.ipynb)
 
 [//]: # (Image References)
 [image1]: ./output_images/example_cars.png
@@ -35,7 +35,7 @@ Link to my [project code](https://github.com/cpierceworld/CarND-Vehicle-Detectio
 
 #### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf. 
 
-A copy of this writeup can be found [here](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/wip/writeup.md).  The code this writeup refers to can be found [here](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/wip/Vehicle_Detection.ipynb)
+A copy of this writeup can be found [here](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/master/writeup.md).  The code this writeup refers to can be found [here](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/master/Vehicle_Detection.ipynb)
 
 ### Histogram of Oriented Gradients (HOG)
 
