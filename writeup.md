@@ -35,7 +35,7 @@ Link to my [project code](https://github.com/cpierceworld/CarND-Vehicle-Detectio
 
 #### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf. 
 
-A copy of this writeup can be found [here](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/wip/writeup.md).  The code this writeup references can be found [here](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/wip/Vehicle_Detection.ipynb)
+A copy of this writeup can be found [here](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/wip/writeup.md).  The code this writeup refers to can be found [here](https://github.com/cpierceworld/CarND-Vehicle-Detection/blob/wip/Vehicle_Detection.ipynb)
 
 ### Histogram of Oriented Gradients (HOG)
 
@@ -46,9 +46,9 @@ I wrote a class to contain all classification logic called `VehicleClassifier`, 
 2. Histograms of Color
 3. Spatial Binning of Color
 
-All 3 feature set's hyper parameters are configurable via the `VehicleClassifier.config` map, including the ability to turn a particular feature set on and off.
+All 3 feature set's hyperparameters are configurable via the `VehicleClassifier.config` map, including the ability to turn a particular feature set on and off.
 
-I explored each feature set using different color spaces and hyperparemters on an example "Car" and "Non-Car" image.
+I explored each feature set using different color spaces and hyperparameters on an example "Car" and "Non-Car" image.
 
 ##### 1. HOG Features
 
@@ -63,18 +63,21 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 ##### 2. Histogram of Color Features
 
-In addition to HOG, I used Histogram of Color features for my classifier.  The code can be found in the 7th code cell in the notebook. I did tests with both having it on and off and found that classifcation worked better with it.  I experimented with various color spaces and number of bins.   Here is an example histogram using the `YCrCb` color space with 32 bins per channel:
+In addition to HOG, I used Histogram of Color features for my classifier.  The code can be found in the 7th code cell in the notebook. I experimented with having it and not having it and found that classifcation worked better with it.  I experimented with various color spaces and number of bins.   Here is an example histogram using the `YCrCb` color space with 32 bins per channel:
 
 ![alt text][image5]
 ![alt text][image6]
 
 ##### 3. Spatial Binning of Color Features
 
-I also used Spatial Binning of Color feature for my classifier.  The code can be found in the 7th code cell in the notebook. Again I ran test with both having it on and off and found the classification worked better with it.   I experimented with various color spaces and image sizes.  Here is an example of using `YCrCb` color space, resized to 32x32:
+I also used Spatial Binning of Color features for my classifier.  The code can be found in the 7th code cell in the notebook. Again I experimented with having it and not having it and found that classification worked better with it.   I experimented with various color spaces and image sizes.  Here is an example of using `YCrCb` color space, resized to 32x32:
 
 ![alt text][image7]
 ![alt text][image8]
 
+#### 4. Scaling the Feature Vector
+
+The resulting feature vector is the concatenation of the HOG, Histogram, and Binned Color features which have values in different scales (e.g. "0.0 - 1.0" vs. "0 - 255").  In order to not have one feature set dominate just due to the scale of it's output values, the code rescales the feature vector using `sklearn.preprocessing.StandardScaler`.  (This is done in the `VehicleClassifier.train()` method, after stakcing together all the feature vectors).
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
@@ -82,7 +85,7 @@ I found that computing the HOG Descriptors took a long time with a small `pixels
 
 The final HOG hyperparameters was `orientations=12` and `pixels_per_cell=(16,16)`.
 
-(**Note**: I acutally wrote a loop to test various combinations of hyper parameters, see section 3 below).
+(**Note**: I acutally wrote a loop to test various combinations of hyperparemters, see section 3 below).
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
