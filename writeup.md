@@ -52,7 +52,7 @@ I explored each feature set using different color spaces and hyperparemters on a
 
 ##### 1. HOG Features
 
-The code for generating HOG features is in 5th code cell of the notebook.  I utilized the [_sklearn_](http://scikit-learn.org/stable/index.html) implementation of HOG.  I also did tests using _OpenCV_'s HOG implementation to see if it would be faster, but it wasn't and it didn't seem to perform as well, so I stuck with _sklearn_.
+The code for generating HOG features is in 5th code cell of the notebook.  I utilized the [_sklearn_](http://scikit-learn.org/stable/index.html) implementation of HOG.
 
 I explored different color spaces and different `skimage.feature.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).
 
@@ -63,14 +63,14 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 ##### 2. Histogram of Color Features
 
-In addition to HOG, I used Histogram of Color features for my classifier.  I did tests with both having it on and off and found that classifcation worked better with it.  I experimented with various color spaces and number of bins.   Here is an example histogram using the `YCrCb` color space with 32 bins per channel:
+In addition to HOG, I used Histogram of Color features for my classifier.  The code can be found in the 7th code cell in the notebook. I did tests with both having it on and off and found that classifcation worked better with it.  I experimented with various color spaces and number of bins.   Here is an example histogram using the `YCrCb` color space with 32 bins per channel:
 
 ![alt text][image5]
 ![alt text][image6]
 
 ##### 3. Spatial Binning of Color Features
 
-I also used Spatial Binning of Color feature for my classifier.  Again I ran test with both having it on and off and found the classification worked better with it.   I experimented with various color spaces and image sizes.  Here is an example of using `YCrCb` color space, resized to 32x32:
+I also used Spatial Binning of Color feature for my classifier.  The code can be found in the 7th code cell in the notebook. Again I ran test with both having it on and off and found the classification worked better with it.   I experimented with various color spaces and image sizes.  Here is an example of using `YCrCb` color space, resized to 32x32:
 
 ![alt text][image7]
 ![alt text][image8]
@@ -122,15 +122,13 @@ My goal was to find a setting that was sufficiently accurate, but took no longer
 | 10     | 16       | 0.5      | linear   | 0.9876   | 0.16                | 
 | 8      | 16       | 1        | poly     | 0.9831   | 3.16                | 
 
-I ended up using `orientations=12`, `pixels_per_cell=(16,16)`, `C=1`, `kernel=linear` as hyperparemters which had an Accuracy 99.24%, and a prection time of only 0.19 seconds.
+I ended up using `orientations=12`, `pixels_per_cell=(16,16)`, `C=1`, `kernel=linear` as hyperparemters which had an Accuracy 99.24%, and a prediction time of only 0.19 seconds.
 
 ### Sliding Window Search
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-My approach to the sliding windows was to use smaller windows only at the horizon where cars would be distant and small, and use medium windows to search the mid region of the image, and large windows near the bottom where close (large) cars would be found.  
-
-I found that more windows (even smaller ones near horizon and larger ones near bottom of the image) increased the chances of finding cars, but at the cost of greatly increasing the processing time for video, so I settled on the "small/medium/large" configuration.
+My approach to use "small/medium/large" sliding windows with the smaller windows only at the horizon where cars would be distant, and use medium windows to search the middle region of the image, and large windows near the bottom where close (large) cars would be found.  
 
 Below is an image showing the sliding windows.
 
@@ -142,26 +140,58 @@ Below is the classifier processing 6 example images:
 
 ![alt text][image10]
 
+I made various attemtps to optimize the performance:
+1. I tried using _OpenCV_'s HOG implementation with _CUDA_ enabled (code can still be found in the 5th code cell).   It didn't really improve the speed by any significant amount, and accuracy went down so I went back to _sklearn_.
+2. I changed the HOG parameters to use 16 pixels per cell vs. 8 which reduced the number of features (and the number of necessary calculations) which trippled the performance (see section 3 about choosing SVM/HOG parameters with regards to performance)
+3. I used the "HOG Sub-Sampling" technique rather than the sliding windows to calculate all the HOG features at once.  Code is in the `VehicleClassier` class in the `find_cars()` method.
+4. I played with the number of sliding windws, originally starting with 5 scales searching the entire lower half of the image, which resulted in minutes per frame to processes.  I settled on 3 scales in targeted regions.
 
 ---
 
 ### Video Implementation
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+
 Here's a [link to my video result](./project_video.mp4)
 
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+I wrote a class called `CarTracker` to contain the logic for actually doing the "sliding window" search and proccessing the ouput of the `VehicleClassifier`.  This code can be found in 11th code cell in the Jupyter notebook.
 
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
+This class is responsible for:
+1. Doing the "sliding window" search.
+2. Filtering out false positives.
+3. Tracking individual cars in between frames.
 
-### Here are six frames and their corresponding heatmaps:
+The `CarTracker.find_cars()` method is the method that does all processing.
+
+The logic goes like this:
+
+1. **Sliding Window**: It does the "sliding window" search using the `VehicleClassifier` which returns many (with overlapping) potential dections (true and false detections).
+
+2. **Heatmap**: Creates a "heatmap" from the potential dections (overlapping dectections results in "more heat").  The assumption is that false positives will have less overlap then true detections.
+
+3. **Heatmap Averaging**: Use "heatmap averaging" to further dilute false positives.  The code keeps a history of heatmaps over a configurable number of video frames (4 by default). Assuming that false positives are not likely accross multiple frames of video, it calculates a "heatmap average" which reduces the values of false positive regions.
+
+4. **Heatmap Threshold**: Thresholds the heatmap, removing regions of "low heat".  These regions should correspend with false positives.
+
+5. **Reheat**: This step is to counter act the phenomena where thresholding tends to shrink the region around a true detection since the fringe area has low heat (resulting in a bounding box that doesn't encapsulate the car).   This step adds heat back to any detection that overlaps a region that still has "heat" after the thresholding from step 4.
+
+5. **Label**: Uses `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap, which are assumed to corresponded to a vehicles. Bounding boxes are constructed to cover the area of each blob detected.
+
+6. **Car Reconciliation**: This step is to reconcile the (potential) vehicles found in the current frame with vehicles found in the previous frame(s).   Bounding boxes that overlap a previously found vehicle is assumed to be the same vehicle.   A new bounding box is calculated as the average of the previous and new.    Bounding boxes that don't overlap a previously found vehicle is assumed to be a new vehicle.  If there is a previously found vehicle with a bounding box that doesn't overlap any current boxes, then that vehicles "not detected" count is incremented (see step 8 "Max Frame No-Detect Filtering").
+
+7. **Min Frame Detect Filtering**:  As a last attempt to filter out false positives the code has configurable parameters for "min frame detect filtering".   This is the minimum number of consecutive frames that a car must be detected before it is officially decared a "Car", given an ID and plotted.  The assumption being that false positives won't be detected in consecutive frames.
+
+8. **Max Frame No-Detect Filtering**: In an attempt to not loose track of cars on the off chance that they are not detected in some sequence of frames, there is "max frame no-detect filtering".  This is the maximum number of consecutive frames that a car can be not detected before the tracker stops trying to track it.
+
+
+### Here are four frames and their corresponding heatmaps:
 
 ![alt text][image11]
 
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
+### Here is the result of "Heatmap Averaging" over the four frames, and the detected blobs from the final image:
 ![alt text][image12]
 
 ---
