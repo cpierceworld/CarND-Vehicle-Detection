@@ -77,7 +77,7 @@ I also used Spatial Binning of Color features for my classifier.  The code can b
 
 #### _Scaling the Feature Vector_
 
-The resulting feature vector is the concatenation of the HOG, Histogram, and Binned Color features which have values in different scales (e.g. "0.0 - 1.0" vs. "0 - 255").  In order to not have one feature set dominate just due to the scale of it's output values, the code rescales the feature vector using `sklearn.preprocessing.StandardScaler`.  (This is done in the `VehicleClassifier.train()` method, after stakcing together all the feature vectors).
+The resulting feature vector is the concatenation of the HOG, Histogram, and Binned Color features which have values in different scales (e.g. "0.0 - 1.0" vs. "0 - 3000" vs. "0 - 255").  In order to not have one feature set dominate just due to the scale of it's output values, the code rescales the feature vector using `sklearn.preprocessing.StandardScaler`.  (This is done in the `VehicleClassifier.train()` method, after stakcing together all the feature vectors).
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
@@ -125,7 +125,7 @@ My goal was to find a setting that was sufficiently accurate, but took no longer
 | 10     | 16       | 0.5      | linear   | 0.9876   | 0.16                | 
 | 8      | 16       | 1        | poly     | 0.9831   | 3.16                | 
 
-I ended up using `orientations=12`, `pixels_per_cell=(16,16)`, `C=1`, `kernel=linear` as hyperparemters which had an accuracy 99.24% and a prediction time of only 0.19 seconds.
+I ended up using `orientations=12`, `pixels_per_cell=(16,16)`, `C=1`, `kernel=linear` as hyperparameters which had an accuracy 99.24% and a prediction time of only 0.19 seconds.
 
 ### Sliding Window Search
 
@@ -171,7 +171,7 @@ The `CarTracker.find_cars()` method does all processing; the logic goes like thi
 
 1. **Sliding Window**: It does the "sliding window" search using the `VehicleClassifier` which returns many (overlapping) potential dections (true and false detections).
 
-2. **Heatmap**: Creates a "heatmap" from the potential dections (overlapping dectections results in "more heat").  The assumption is that false positives will have less overlap then true detections.
+2. **Heatmap**: Creates a "heatmap" from the potential detections (overlapping detections results in "more heat").  The assumption is that false positives will have less overlap then true detections.
 
 3. **Heatmap Averaging**: Uses "heatmap averaging" to further dilute false positives.  The code keeps a history of heatmaps over a configurable number of video frames (4 by default). Assuming that false positives are not likely accross multiple frames of video, it calculates a "heatmap average" which reduces the values in false positive regions.
 
@@ -181,11 +181,11 @@ The `CarTracker.find_cars()` method does all processing; the logic goes like thi
 
 5. **Label**: Uses `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap, which are assumed to corresponded to vehicles. Bounding boxes are constructed to cover the area of each blob detected.
 
-6. **Car Reconciliation**: This step is to reconcile the (potential) vehicles found in the current frame with vehicles found in the previous frame(s).   Bounding boxes that overlap a previously found vehicle is assumed to be the same vehicle.   A new bounding box is calculated as the average of the previous and new.    Bounding boxes that don't overlap a previously found vehicle are assumed to be new vehicles.  If there is a previously found vehicle with a bounding box that doesn't overlap any current boxes, then that vehicle's "not detected" count is incremented (see step 8 "Max Frame No-Detect Filtering").
+6. **Car Reconciliation**: This step is to reconcile the (potential) vehicles found in the current frame with vehicles found in the previous frame(s).   Bounding boxes that overlap a previously found vehicle are assumed to be the same vehicle.   A new bounding box is calculated as the average of the previous and new.    Bounding boxes that don't overlap any previously found vehicles are assumed to be new vehicles.  If there is a previously found vehicle that doesn't overlap any current bounding box, then that vehicle's "not detected" count is incremented (see step 8 "Max Frame No-Detect Filtering").
 
-7. **Min Frame Detect Filtering**:  As a last attempt to filter out false positives the code has a configurable parameter for "min frame detect filtering".   This is the minimum number of consecutive frames that a car must be detected in before it is recognized as a "Car", given an ID and plotted.  The assumption being that false positives won't be detected many consecutive frames.
+7. **Min Frame Detect Filtering**:  As a last attempt to filter out false positives, the code has a configurable parameter for "min frame detect filtering".   This is the minimum number of consecutive frames that a car must be detected in before it is recognized as a "Car", given an ID and plotted.  The assumption is that false positives won't be detected in consecutive frames.
 
-8. **Max Frame No-Detect Filtering**: In an attempt to not loose track of cars when they are mistakenly not detected, there is "max frame no-detect filtering".  This is the maximum number of consecutive frames that a car can be not detected before the tracker stops trying to track it.
+8. **Max Frame No-Detect Filtering**: In an attempt to not loose track of cars when they are mistakenly not detected, there is "max frame no-detect filtering".  This is the maximum number of consecutive frames that a car can not be detected before the tracker stops trying to track it.
 
 
 ### Here are four frames and their corresponding heatmaps:
@@ -203,6 +203,6 @@ The `CarTracker.find_cars()` method does all processing; the logic goes like thi
 
 Performance was an issue throughout this project.  Long processing times limited the amount of experimentation.  The final product is still far too slow for any real time processing, averaging only 1 and a half frames per second.   Thoughts to speed it up include switching to OpenCV's SVM implementation which may be faster (assuming it utilzies the GPU).   My other idea was to try switching from `LinearSVC()` to a simple neural net (1 fully connected layer and a softmax) to process the feature vector and see how accurate that is (can use TensorFlow with GPU enabled).
 
-I was significantly delayed by a bad assumptionthat _sklearn_'s `SVC(kernel='linear')` was equivalent to `LinearSVC()`.   My early attempt at this project utilized `LinearSVC()` and was getting close to 2 frames per second processing.   I then tried to "improve" my project with automatic hyperperameter tuning, including the SVM kernel, so I switched to using the `SVC()` class that takes the kernel as a parameter.  I found that my "auto-tuned" implementation was getting less than a frame per second, and switching back to my original params made no difference.   After may hours of playing with parameters to try and figure out the cause of the slowdown, I finally found that it was the switch from `LinearSVC()` to `SVC(kernel='linear')`.   In the `VehicleClassification.train()` method, I added logic to see if the user passed in a kernel of 'linear' and create a `LinearSVC()` in that scenario.
+I was significantly delayed by a bad assumption that _sklearn_'s `SVC(kernel='linear')` was equivalent to `LinearSVC()`.   My early attempt at this project utilized `LinearSVC()` and was getting close to 2 frames per second processing.   I then tried to "improve" my project with automatic hyperperameter tuning, including the SVM kernel, so I switched to using the `SVC()` class that takes the kernel as a parameter.  I found that my "auto-tuned" implementation was getting less than a frame per second, and switching back to my original params made no difference.   After may hours of playing with parameters to try and figure out the cause of the slowdown, I finally found that it was the switch from `LinearSVC()` to `SVC(kernel='linear')`.   In the `VehicleClassification.train()` method, I added logic to see if the user passed in a kernel of 'linear' and create a `LinearSVC()` in that scenario.
 
 If I were to do this project again, I don't think I would use "HOG"/"SVM".  I would like to experiment with more recent solutions for "object detection with localization" such as ["You Only Look Once (YOLO)"](https://github.com/pjreddie/darknet/wiki/YOLO:-Real-Time-Object-Detection) and ["Single Shot Detection (SSD)"](https://github.com/weiliu89/caffe/tree/ssd).
